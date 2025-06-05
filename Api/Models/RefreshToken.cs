@@ -16,9 +16,6 @@ namespace Api.Models
 
         public DateTime Created { get; set; }
 
-        [StringLength(45)]
-        public string? CreatedByIp { get; set; }
-
         public bool IsRevoked { get; set; }
 
         public DateTime? RevokedAt { get; set; }
