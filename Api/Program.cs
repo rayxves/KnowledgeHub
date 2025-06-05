@@ -1,7 +1,10 @@
 using System.Text;
 using Api.Data;
+using Api.Interfaces;
 using Api.Models;
+using Api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.CookiePolicy;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -81,6 +84,7 @@ builder.Services.AddSingleton<IMongoClient>(sp =>
 });
 
 builder.Services.AddTransient<CategoryDataSeeder>();
+builder.Services.AddScoped<IAuthServices, AuthServices>();
 
 var app = builder.Build();
 
@@ -89,6 +93,14 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+// app.UseCookiePolicy(new CookiePolicyOptions
+// {
+//     MinimumSameSitePolicy = SameSiteMode.Strict,
+//     Secure = CookieSecurePolicy.Always, 
+//     HttpOnly = HttpOnlyPolicy.Always 
+// });
+
 
 app.UseAuthentication();
 app.UseAuthorization();
