@@ -42,7 +42,6 @@ namespace Api.Models
         public ICollection<Favorite> Favorites { get; set; } = new List<Favorite>();
         public ICollection<ArticleLike> Likes { get; set; } = new List<ArticleLike>();
 
-        [NotMapped]
-        public List<string> MediaUrls { get; set; } = new List<string>();
+        public ICollection<Media>? MediaItems { get; set; }
     }
 }

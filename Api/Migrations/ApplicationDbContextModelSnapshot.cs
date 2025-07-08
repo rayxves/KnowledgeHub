@@ -202,13 +202,37 @@ namespace Api.Migrations
                     b.ToTable("Favorites");
                 });
 
-            modelBuilder.Entity("Api.Models.RefreshToken", b =>
+            modelBuilder.Entity("Api.Models.Media", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ArticleId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<int>("Type")
                         .HasColumnType("integer");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                    b.Property<string>("Url")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ArticleId");
+
+                    b.ToTable("MediaItems");
+                });
+
+            modelBuilder.Entity("Api.Models.RefreshToken", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime>("Created")
                         .HasColumnType("timestamp with time zone");
@@ -551,6 +575,17 @@ namespace Api.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Api.Models.Media", b =>
+                {
+                    b.HasOne("Api.Models.Article", "Article")
+                        .WithMany("MediaItems")
+                        .HasForeignKey("ArticleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Article");
+                });
+
             modelBuilder.Entity("Api.Models.RefreshToken", b =>
                 {
                     b.HasOne("Api.Models.User", "User")
@@ -620,6 +655,8 @@ namespace Api.Migrations
                     b.Navigation("Favorites");
 
                     b.Navigation("Likes");
+
+                    b.Navigation("MediaItems");
                 });
 
             modelBuilder.Entity("Api.Models.Category", b =>

@@ -9,5 +9,6 @@ namespace Api.Interfaces
         Task<UserDto?> LoginAsync(LoginUserDto loginUserDto);
         string CreateToken(User user);
         string GenerateRefreshToken();
+        Task<UserDto?> RefreshTokenAsync(string refreshToken);
     }
 }

@@ -64,7 +64,7 @@ namespace Api.Services
         public async Task<UserDto?> LoginAsync(LoginUserDto loginUserDto)
         {
             var user = await _userManager.Users
-                .Include(u => u.RefreshTokens) 
+                .Include(u => u.RefreshTokens)
                 .FirstOrDefaultAsync(x => x.UserName == loginUserDto.UserName);
 
             if (user == null)
@@ -86,7 +86,7 @@ namespace Api.Services
                 UserId = user.Id
             };
 
-            _context.RefreshTokens.Add(refreshToken); 
+            _context.RefreshTokens.Add(refreshToken);
             await _context.SaveChangesAsync();
 
             return new UserDto
@@ -94,8 +94,44 @@ namespace Api.Services
                 UserName = user.UserName,
                 Email = user.Email,
                 Token = accessToken,
-                RefreshToken = refreshTokenValue 
+                RefreshToken = refreshTokenValue
             };
+        }
+
+        public async Task<UserDto?> RefreshTokenAsync(string refreshToken)
+        {
+            var storedToken = await _context.RefreshTokens.Include(rt => rt.User).FirstOrDefaultAsync(rt => rt.Token == refreshToken && !rt.IsRevoked);
+            if (storedToken == null || storedToken.Expires < DateTime.UtcNow)
+            {
+                throw new InvalidOperationException("Refresh token inválido.");
+            }
+            var user = storedToken.User;
+            if (user == null)
+            {
+                throw new InvalidOperationException("Usuario não pode ser nulo.");
+            }
+            storedToken.IsRevoked = true;
+            var newRefreshToken = new RefreshToken
+            {
+                Token = GenerateRefreshToken(),
+                Created = DateTime.UtcNow,
+                Expires = DateTime.UtcNow.AddDays(7),
+                UserId = user.Id
+            };
+
+            _context.RefreshTokens.Add(newRefreshToken);
+            await _context.SaveChangesAsync();
+
+            var accessToken = CreateToken(user);
+
+            return new UserDto
+            {
+                UserName = user.UserName,
+                Email = user.Email,
+                Token = accessToken,
+                RefreshToken = newRefreshToken.Token
+            };
+
         }
 
         public async Task<UserDto?> RegisterAsync(RegisterUserDto registerUserDto)
@@ -108,9 +144,7 @@ namespace Api.Services
             {
                 FullName = registerUserDto.FullName,
                 UserName = registerUserDto.UserName,
-                Email = registerUserDto.Email,
-                About = registerUserDto.About,
-                Age = registerUserDto.Age
+                Email = registerUserDto.Email
             };
 
             var result = await _userManager.CreateAsync(user, registerUserDto.Password);

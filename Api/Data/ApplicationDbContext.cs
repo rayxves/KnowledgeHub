@@ -18,6 +18,8 @@ namespace Api.Data
         public DbSet<RefreshToken> RefreshTokens { get; set; } = default!;
         public DbSet<ArticleLike> ArticleLikes { get; set; } = default!;
         public DbSet<CommentLike> CommentLikes { get; set; } = default!;
+        public DbSet<Media> MediaItems { get; set; } = default!;
+
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -45,6 +47,11 @@ namespace Api.Data
             builder.Entity<Category>()
                 .HasIndex(c => c.Slug)
                 .IsUnique();
+
+            builder.Entity<Media>()
+            .HasOne(m => m.Article)
+            .WithMany(a => a.MediaItems)
+            .HasForeignKey(m => m.ArticleId);
 
         }
 
