@@ -7,7 +7,8 @@ namespace Api.Dtos
     {
         [Required]
         public Guid Id { get; set; }
-        
+        public string UserId { get; set; }
+
         [Required]
         [StringLength(200)]
         public string Title { get; set; } = string.Empty;

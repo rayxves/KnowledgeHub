@@ -85,6 +85,7 @@ builder.Services.AddSingleton<IMongoClient>(sp =>
 
 builder.Services.AddTransient<CategoryDataSeeder>();
 builder.Services.AddScoped<IAuthServices, AuthServices>();
+builder.Services.AddScoped<IArticleServices, ArticleServices>();
 
 var app = builder.Build();
 

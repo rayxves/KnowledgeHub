@@ -38,8 +38,8 @@ namespace Api.Models
 
         public Category Category { get; set; } = default!;
 
-        public ICollection<Comment> Comments { get; set; } = new List<Comment>();
-        public ICollection<Favorite> Favorites { get; set; } = new List<Favorite>();
+        public ICollection<Comment>? Comments { get; set; } 
+        public ICollection<Favorite>? Favorites { get; set; } 
         public ICollection<ArticleLike> Likes { get; set; } = new List<ArticleLike>();
 
         public ICollection<Media>? MediaItems { get; set; }

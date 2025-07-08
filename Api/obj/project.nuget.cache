@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "2W0CrcBkeeg=",
+  "dgSpecHash": "WcGIzZGdpXk=",
   "success": true,
   "projectFilePath": "/home/ray/Documentos/Csharp/KnowledgeHub/Api/Api.csproj",
   "expectedPackageFiles": [
@@ -11,6 +11,7 @@
     "/home/ray/.nuget/packages/fluentvalidation.aspnetcore/11.3.0/fluentvalidation.aspnetcore.11.3.0.nupkg.sha512",
     "/home/ray/.nuget/packages/fluentvalidation.dependencyinjectionextensions/11.5.1/fluentvalidation.dependencyinjectionextensions.11.5.1.nupkg.sha512",
     "/home/ray/.nuget/packages/humanizer.core/2.14.1/humanizer.core.2.14.1.nupkg.sha512",
+    "/home/ray/.nuget/packages/markdig/0.41.3/markdig.0.41.3.nupkg.sha512",
     "/home/ray/.nuget/packages/microsoft.aspnetcore.authentication.abstractions/2.3.0/microsoft.aspnetcore.authentication.abstractions.2.3.0.nupkg.sha512",
     "/home/ray/.nuget/packages/microsoft.aspnetcore.authentication.core/2.3.0/microsoft.aspnetcore.authentication.core.2.3.0.nupkg.sha512",
     "/home/ray/.nuget/packages/microsoft.aspnetcore.authentication.jwtbearer/9.0.5/microsoft.aspnetcore.authentication.jwtbearer.9.0.5.nupkg.sha512",

@@ -173,3 +173,4 @@
 /home/ray/Documentos/Csharp/KnowledgeHub/Api/obj/Debug/net9.0/Api.pdb
 /home/ray/Documentos/Csharp/KnowledgeHub/Api/obj/Debug/net9.0/Api.genruntimeconfig.cache
 /home/ray/Documentos/Csharp/KnowledgeHub/Api/obj/Debug/net9.0/ref/Api.dll
+/home/ray/Documentos/Csharp/KnowledgeHub/Api/bin/Debug/net9.0/Markdig.dll
