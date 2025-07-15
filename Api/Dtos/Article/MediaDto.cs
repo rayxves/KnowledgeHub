@@ -6,7 +6,7 @@ namespace Api.Dtos
     {
         public string Url { get; set; } = string.Empty;
 
-        public MediaType Type { get; set; }
+        public string Type { get; set; }
 
         public string? Description { get; set; }
     }

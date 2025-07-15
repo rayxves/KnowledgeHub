@@ -7,7 +7,6 @@ namespace Api.Dtos
     {
         [Required]
         public Guid Id { get; set; }
-        public string UserId { get; set; }
 
         [Required]
         [StringLength(200)]
@@ -16,10 +15,10 @@ namespace Api.Dtos
         [Required]
         public string ContentMarkdown { get; set; } = string.Empty;
 
-        public ArticleStatus Status { get; set; }
+        public string Status { get; set; }
 
-        public Guid CategoryId { get; set; }
+        public string Slug { get; set; }
 
-        public ICollection<Media>? MediaItems { get; set; }
+        public ICollection<MediaDto>? MediaItems { get; set; }
     }
 }

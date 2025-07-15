@@ -20,12 +20,12 @@ namespace Api.Services
             _userManager = userManager;
         }
 
-        public async Task<GetByUserArticleDto> CreateArticleAsync(CreateArticleDto createArticleDto)
+        public async Task<GetByUserArticleDto> CreateArticleAsync(CreateArticleDto createArticleDto, string userId)
         {
-            var user = await _userManager.FindByIdAsync(createArticleDto.UserId);
+            var user = await _userManager.FindByIdAsync(userId);
             if (user == null) throw new ArgumentException("Usúario não foi encontrado.");
 
-            var category = await _context.Categories.FirstOrDefaultAsync(c => c.Id == createArticleDto.CategoryId);
+            var category = await _context.Categories.FirstOrDefaultAsync(c => c.Slug.ToLower() == createArticleDto.Slug.ToLower());
             if (category == null) throw new ArgumentException("Categoria não foi encontrada.");
 
             var article = new Article
@@ -33,12 +33,12 @@ namespace Api.Services
                 Title = createArticleDto.Title,
                 ContentMarkdown = createArticleDto.ContentMarkdown,
                 ContentHtmlSanitized = Markdown.ToHtml(createArticleDto.ContentMarkdown),
-                UserId = createArticleDto.UserId,
+                UserId = user.Id,
                 User = user,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
                 Category = category,
-                Status = createArticleDto.Status,
+                Status = ArticleStatus.Published,
                 Likes = new List<ArticleLike>(),
                 Comments = new List<Comment>(),
                 Favorites = new List<Favorite>()
@@ -51,10 +51,13 @@ namespace Api.Services
             {
                 foreach (var mediaItem in createArticleDto.MediaItems)
                 {
+                    var mediaType = Enum.TryParse<MediaType>(mediaItem.Type, true, out var parsedType)
+                        ? parsedType
+                        : throw new ArgumentException("Tipo de mídia inválido.");
                     var media = new Media
                     {
                         Url = mediaItem.Url,
-                        Type = mediaItem.Type,
+                        Type = mediaType,
                         ArticleId = article.Id
                     };
                     _context.MediaItems.Add(media);
@@ -69,7 +72,7 @@ namespace Api.Services
                 CreatedAt = article.CreatedAt,
                 CreatedBy = user.UserName,
                 CategoryName = category.Name,
-                Status = article.Status,
+                Status = article.Status.ToString(),
                 UpdatedAt = article.UpdatedAt,
                 LikesCount = article.Likes.Count,
                 MediaItems = article.MediaItems?.Select(m => m.ToMediaDto()).ToList() ?? new List<MediaDto>(),
@@ -117,7 +120,7 @@ namespace Api.Services
                 MediaItems = a.MediaItems.Select(m => new MediaDto
                 {
                     Url = m.Url,
-                    Type = m.Type,
+                    Type = m.Type.ToString(),
                     Description = m.Description
                 }).ToList()
             });
@@ -135,13 +138,14 @@ namespace Api.Services
 
             return articles.Select(a => new GetByUserArticleDto
             {
+                Id = a.Id,
                 Title = a.Title,
                 ContentHtmlSanitized = a.ContentHtmlSanitized,
                 CreatedAt = a.CreatedAt,
                 CreatedBy = a.User.UserName,
                 CategoryName = a.Category.Name,
                 UpdatedAt = a.UpdatedAt,
-                Status = a.Status,
+                Status = a.Status.ToString(),
                 LikesCount = a.Likes.Count,
                 Comments = a.Comments.Select(c => new GetCommentDto
                 {
@@ -153,7 +157,7 @@ namespace Api.Services
                 MediaItems = a.MediaItems.Select(m => new MediaDto
                 {
                     Url = m.Url,
-                    Type = m.Type,
+                    Type = m.Type.ToString(),
                     Description = m.Description
                 }).ToList()
             });
@@ -169,8 +173,10 @@ namespace Api.Services
                 .Include(a => a.MediaItems)
                 .ToListAsync();
 
+
             return articles.Select(a => new GetArticleDto
             {
+                Id = a.Id,
                 Title = a.Title,
                 ContentHtmlSanitized = a.ContentHtmlSanitized,
                 CreatedAt = a.CreatedAt,
@@ -187,13 +193,13 @@ namespace Api.Services
                 MediaItems = a.MediaItems.Select(m => new MediaDto
                 {
                     Url = m.Url,
-                    Type = m.Type,
+                    Type = m.Type.ToString(),
                     Description = m.Description
                 }).ToList()
             });
         }
 
-        public async Task<GetByUserArticleDto> UpdateArticleAsync(UpdateArticleDto updateArticleDto)
+        public async Task<GetByUserArticleDto> UpdateArticleAsync(UpdateArticleDto updateArticleDto, string userId)
         {
             var article = await _context.Articles
                 .Include(a => a.User)
@@ -202,14 +208,24 @@ namespace Api.Services
                 .Include(a => a.MediaItems)
                 .FirstOrDefaultAsync(a => a.Id == updateArticleDto.Id);
 
-            if (article == null || article.UserId != updateArticleDto.UserId)
+            if (article == null || article.UserId != userId)
                 throw new ArgumentException("Artigo não encontrado ou você não tem permissão para atualizá-lo.");
+
+            var status = Enum.TryParse<ArticleStatus>(updateArticleDto.Status, true, out var parsedStatus)
+                ? parsedStatus
+                : throw new ArgumentException("Status inválido.");
+
+            var category = await _context.Categories
+                .FirstOrDefaultAsync(c => c.Slug.ToLower() == updateArticleDto.Slug.ToLower())
+                ?? throw new ArgumentException("Categoria não encontrada.");
 
             article.Title = updateArticleDto.Title;
             article.ContentMarkdown = updateArticleDto.ContentMarkdown;
             article.ContentHtmlSanitized = Markdown.ToHtml(updateArticleDto.ContentMarkdown);
             article.UpdatedAt = DateTime.UtcNow;
-            article.Status = updateArticleDto.Status;
+            article.Status = status;
+            article.Category = category;
+            article.CategoryId = category.Id;
 
             var oldMedia = await _context.MediaItems.Where(m => m.ArticleId == article.Id).ToListAsync();
             _context.MediaItems.RemoveRange(oldMedia);
@@ -218,10 +234,14 @@ namespace Api.Services
             {
                 foreach (var mediaItem in updateArticleDto.MediaItems)
                 {
+                    var mediaType = Enum.TryParse<MediaType>(mediaItem.Type, true, out var parsedType)
+                        ? parsedType
+                        : throw new ArgumentException("Tipo de mídia inválido.");
+
                     var media = new Media
                     {
                         Url = mediaItem.Url,
-                        Type = mediaItem.Type,
+                        Type = mediaType,
                         Description = mediaItem.Description,
                         ArticleId = article.Id
                     };
@@ -239,7 +259,7 @@ namespace Api.Services
                 CreatedAt = article.CreatedAt,
                 CreatedBy = article.User.UserName,
                 CategoryName = article.Category.Name,
-                Status = article.Status,
+                Status = article.Status.ToString(),
                 UpdatedAt = article.UpdatedAt,
                 LikesCount = article.Likes.Count,
                 MediaItems = article.MediaItems?.Select(m => m.ToMediaDto()).ToList() ?? new List<MediaDto>(),

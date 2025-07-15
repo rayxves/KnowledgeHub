@@ -5,6 +5,8 @@ namespace Api.Dtos
 {
     public class GetArticleDto
     {
+
+        public Guid Id { get; set; }
         public string Title { get; set; } = string.Empty;
 
         public string? ContentHtmlSanitized { get; set; }

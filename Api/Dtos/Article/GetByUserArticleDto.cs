@@ -5,6 +5,7 @@ namespace Api.Dtos
 {
     public class GetByUserArticleDto
     {
+         public Guid Id { get; set; }
        
         public string Title { get; set; } = string.Empty;
 
@@ -18,7 +19,7 @@ namespace Api.Dtos
 
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
-        public ArticleStatus Status { get; set; }
+        public string Status { get; set; }
 
         public int LikesCount { get; set; }
 

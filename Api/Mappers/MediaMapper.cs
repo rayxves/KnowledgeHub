@@ -10,7 +10,7 @@ namespace Api.Mappers
             return new MediaDto
             {
                 Url = media.Url,
-                Type = media.Type,
+                Type = media.Type.ToString(),
                 Description = media.Description
             };
         }

@@ -1,0 +1,141 @@
+namespace Api.Controllers
+{
+    using Microsoft.AspNetCore.Mvc;
+    using Api.Data;
+    using Api.Models;
+    using System.Collections.Generic;
+    using System.Linq;
+    using Api.Services;
+    using System.Security.Claims;
+    using Api.Interfaces;
+    using Api.Dtos;
+    using Microsoft.AspNetCore.Authorization;
+
+    [Route("api/article")]
+    [ApiController]
+    public class ArticleController : ControllerBase
+    {
+        private readonly IArticleServices _articleService;
+
+        public ArticleController(IArticleServices articleService)
+        {
+            _articleService = articleService;
+        }
+
+
+        [HttpGet]
+        public async Task<IActionResult> GetArticles()
+        {
+            var articles = await _articleService.GetAllPublicArticlesAsync();
+            if (articles == null || !articles.Any())
+            {
+                return NotFound("Nenhum artigo encontrado.");
+            }
+            return Ok(articles);
+        }
+
+        [Authorize]
+        [HttpGet("by-user")]
+        public async Task<IActionResult> GetUserArticles()
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null)
+            {
+                return Unauthorized("Usuário não foi encontrado.");
+            }
+            var articles = await _articleService.GetMyArticlesAsync(userIdClaim.Value);
+            if (articles == null || !articles.Any())
+            {
+                return NotFound("Nenhum artigo encontrado para esse usuário.");
+            }
+            return Ok(articles);
+        }
+
+        [HttpGet("public-by-user/{userId}")]
+        public async Task<IActionResult> GetPublicArticlesByUserId(string userId)
+        {
+            if (string.IsNullOrEmpty(userId))
+            {
+                return BadRequest("UserId não pode estar vazio.");
+            }
+
+            var articles = await _articleService.GetPublicArticlesByUserIdAsync(userId);
+            if (articles == null || !articles.Any())
+            {
+                return NotFound("Nenhum artigo público encontrado para esse usuário.");
+            }
+            return Ok(articles);
+        }
+
+        [Authorize]
+        [HttpPost("create")]
+        public async Task<IActionResult> CreateArticle([FromBody] CreateArticleDto createArticleDto)
+        {
+
+            if (createArticleDto == null)
+            {
+                return BadRequest("Dados invalidos ou vazios.");
+            }
+
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null)
+            {
+                return Unauthorized("Usuário não foi encontrado.");
+            }
+
+            var createdArticle = await _articleService.CreateArticleAsync(createArticleDto, userIdClaim.Value);
+            if (createdArticle == null)
+            {
+                return BadRequest("Falha ao criar o artigo.");
+            }
+            return CreatedAtAction(nameof(GetArticles), createdArticle);
+        }
+
+        [Authorize]
+        [HttpPut("update")]
+        public async Task<IActionResult> UpdateArticle([FromBody] UpdateArticleDto updateArticleDto)
+        {
+            if (updateArticleDto == null)
+            {
+                return BadRequest("Dados inválidos ou vazios.");
+            }
+
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null)
+            {
+                return Unauthorized("Usuário não foi encontrado.");
+            }
+
+            var updatedArticle = await _articleService.UpdateArticleAsync(updateArticleDto, userIdClaim.Value);
+            if (updatedArticle == null)
+            {
+                return NotFound("Nenhum artigo encontrado.");
+            }
+            return Ok(updatedArticle);
+        }
+
+        [Authorize]
+        [HttpDelete("delete/{id}")]
+        public async Task<IActionResult> DeleteArticle(Guid id)
+        {
+            if (id == Guid.Empty)
+            {
+                return BadRequest("Id do artigo inválido ou vazio.");
+            }
+
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null)
+            {
+                return Unauthorized("Usuário não foi encontrado.");
+            }
+
+            var isDeleted = await _articleService.DeleteArticleAsync(userIdClaim.Value, id);
+            if (!isDeleted)
+            {
+                return NotFound("Nenhum artigo encontrado ou não pode ser deletado.");
+            }
+            return NoContent();
+        }
+
+    }
+}

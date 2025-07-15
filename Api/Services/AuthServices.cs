@@ -29,7 +29,7 @@ namespace Api.Services
         {
             var signingKey = _configuration.GetValue<string>("JWT:SigningKey")
                 ?? throw new InvalidOperationException("JWT:SigningKey não configurado.");
-
+      
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id),
@@ -91,6 +91,7 @@ namespace Api.Services
 
             return new UserDto
             {
+                Id = user.Id,
                 UserName = user.UserName,
                 Email = user.Email,
                 Token = accessToken,
@@ -126,6 +127,7 @@ namespace Api.Services
 
             return new UserDto
             {
+                Id = user.Id,
                 UserName = user.UserName,
                 Email = user.Email,
                 Token = accessToken,
@@ -167,6 +169,7 @@ namespace Api.Services
 
             return new UserDto
             {
+                Id = user.Id,
                 UserName = user.UserName,
                 Email = user.Email,
                 Token = CreateToken(user),

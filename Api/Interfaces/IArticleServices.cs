@@ -10,9 +10,9 @@ namespace Api.Interfaces
 
         Task<IEnumerable<GetArticleDto>> GetAllPublicArticlesAsync();
 
-        Task<GetByUserArticleDto> CreateArticleAsync(CreateArticleDto createArticleDto);
+        Task<GetByUserArticleDto> CreateArticleAsync(CreateArticleDto createArticleDto, string userId);
 
-        Task<GetByUserArticleDto> UpdateArticleAsync(UpdateArticleDto updateArticleDto);
+        Task<GetByUserArticleDto> UpdateArticleAsync(UpdateArticleDto updateArticleDto, string userId);
 
         Task<bool> DeleteArticleAsync(string userId, Guid articleId);
 

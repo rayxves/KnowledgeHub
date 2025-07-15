@@ -13,6 +13,7 @@
 /home/ray/Documentos/Csharp/KnowledgeHub/Api/bin/Debug/net9.0/FluentValidation.AspNetCore.dll
 /home/ray/Documentos/Csharp/KnowledgeHub/Api/bin/Debug/net9.0/FluentValidation.DependencyInjectionExtensions.dll
 /home/ray/Documentos/Csharp/KnowledgeHub/Api/bin/Debug/net9.0/Humanizer.dll
+/home/ray/Documentos/Csharp/KnowledgeHub/Api/bin/Debug/net9.0/Markdig.dll
 /home/ray/Documentos/Csharp/KnowledgeHub/Api/bin/Debug/net9.0/Microsoft.AspNetCore.Authentication.JwtBearer.dll
 /home/ray/Documentos/Csharp/KnowledgeHub/Api/bin/Debug/net9.0/Microsoft.AspNetCore.Cryptography.Internal.dll
 /home/ray/Documentos/Csharp/KnowledgeHub/Api/bin/Debug/net9.0/Microsoft.AspNetCore.Cryptography.KeyDerivation.dll
@@ -82,7 +83,6 @@
 /home/ray/Documentos/Csharp/KnowledgeHub/Api/bin/Debug/net9.0/System.Composition.Runtime.dll
 /home/ray/Documentos/Csharp/KnowledgeHub/Api/bin/Debug/net9.0/System.Composition.TypedParts.dll
 /home/ray/Documentos/Csharp/KnowledgeHub/Api/bin/Debug/net9.0/System.IdentityModel.Tokens.Jwt.dll
-/home/ray/Documentos/Csharp/KnowledgeHub/Api/bin/Debug/net9.0/System.Text.Json.dll
 /home/ray/Documentos/Csharp/KnowledgeHub/Api/bin/Debug/net9.0/ZstdSharp.dll
 /home/ray/Documentos/Csharp/KnowledgeHub/Api/bin/Debug/net9.0/cs/Microsoft.CodeAnalysis.resources.dll
 /home/ray/Documentos/Csharp/KnowledgeHub/Api/bin/Debug/net9.0/de/Microsoft.CodeAnalysis.resources.dll
@@ -173,4 +173,3 @@
 /home/ray/Documentos/Csharp/KnowledgeHub/Api/obj/Debug/net9.0/Api.pdb
 /home/ray/Documentos/Csharp/KnowledgeHub/Api/obj/Debug/net9.0/Api.genruntimeconfig.cache
 /home/ray/Documentos/Csharp/KnowledgeHub/Api/obj/Debug/net9.0/ref/Api.dll
-/home/ray/Documentos/Csharp/KnowledgeHub/Api/bin/Debug/net9.0/Markdig.dll
