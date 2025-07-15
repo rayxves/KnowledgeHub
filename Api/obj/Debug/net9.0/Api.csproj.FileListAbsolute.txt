@@ -173,3 +173,14 @@
 /home/ray/Documentos/Csharp/KnowledgeHub/Api/obj/Debug/net9.0/Api.pdb
 /home/ray/Documentos/Csharp/KnowledgeHub/Api/obj/Debug/net9.0/Api.genruntimeconfig.cache
 /home/ray/Documentos/Csharp/KnowledgeHub/Api/obj/Debug/net9.0/ref/Api.dll
+/home/ray/Documentos/Csharp/KnowledgeHub/Api/bin/Debug/net9.0/Microsoft.IO.RecyclableMemoryStream.dll
+/home/ray/Documentos/Csharp/KnowledgeHub/Api/bin/Debug/net9.0/MimeMapping.dll
+/home/ray/Documentos/Csharp/KnowledgeHub/Api/bin/Debug/net9.0/Supabase.dll
+/home/ray/Documentos/Csharp/KnowledgeHub/Api/bin/Debug/net9.0/Supabase.Core.dll
+/home/ray/Documentos/Csharp/KnowledgeHub/Api/bin/Debug/net9.0/Supabase.Functions.dll
+/home/ray/Documentos/Csharp/KnowledgeHub/Api/bin/Debug/net9.0/Supabase.Gotrue.dll
+/home/ray/Documentos/Csharp/KnowledgeHub/Api/bin/Debug/net9.0/Supabase.Postgrest.dll
+/home/ray/Documentos/Csharp/KnowledgeHub/Api/bin/Debug/net9.0/Supabase.Realtime.dll
+/home/ray/Documentos/Csharp/KnowledgeHub/Api/bin/Debug/net9.0/Supabase.Storage.dll
+/home/ray/Documentos/Csharp/KnowledgeHub/Api/bin/Debug/net9.0/System.Reactive.dll
+/home/ray/Documentos/Csharp/KnowledgeHub/Api/bin/Debug/net9.0/Websocket.Client.dll

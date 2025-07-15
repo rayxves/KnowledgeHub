@@ -51,22 +51,25 @@ namespace Api.Services
             {
                 foreach (var mediaItem in createArticleDto.MediaItems)
                 {
-                    var mediaType = Enum.TryParse<MediaType>(mediaItem.Type, true, out var parsedType)
-                        ? parsedType
-                        : throw new ArgumentException("Tipo de mídia inválido.");
+                    var mediaType = Enum.TryParse<MediaType>(mediaItem.Type, true, out var parsedType) ? parsedType : MediaType.Image;
+
                     var media = new Media
                     {
                         Url = mediaItem.Url,
                         Type = mediaType,
+                        Description = mediaItem.Description,
                         ArticleId = article.Id
                     };
+
                     _context.MediaItems.Add(media);
+
                 }
                 await _context.SaveChangesAsync();
             }
 
             return new GetByUserArticleDto
             {
+                Id = article.Id,
                 Title = article.Title,
                 ContentHtmlSanitized = article.ContentHtmlSanitized,
                 CreatedAt = article.CreatedAt,
@@ -104,6 +107,7 @@ namespace Api.Services
 
             return articles.Select(a => new GetArticleDto
             {
+                Id = a.Id,
                 Title = a.Title,
                 ContentHtmlSanitized = a.ContentHtmlSanitized,
                 CreatedAt = a.CreatedAt,
@@ -234,9 +238,7 @@ namespace Api.Services
             {
                 foreach (var mediaItem in updateArticleDto.MediaItems)
                 {
-                    var mediaType = Enum.TryParse<MediaType>(mediaItem.Type, true, out var parsedType)
-                        ? parsedType
-                        : throw new ArgumentException("Tipo de mídia inválido.");
+                    var mediaType = Enum.TryParse<MediaType>(mediaItem.Type, true, out var parsedType) ? parsedType : MediaType.Image;
 
                     var media = new Media
                     {
@@ -245,6 +247,7 @@ namespace Api.Services
                         Description = mediaItem.Description,
                         ArticleId = article.Id
                     };
+
                     _context.MediaItems.Add(media);
                 }
             }
@@ -254,6 +257,7 @@ namespace Api.Services
 
             return new GetByUserArticleDto
             {
+                Id = article.Id,
                 Title = article.Title,
                 ContentHtmlSanitized = article.ContentHtmlSanitized,
                 CreatedAt = article.CreatedAt,
