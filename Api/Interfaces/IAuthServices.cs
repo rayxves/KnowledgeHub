@@ -1,4 +1,5 @@
 using Api.Dtos;
+using Api.Dtos.User;
 using Api.Models;
 
 namespace Api.Interfaces
@@ -10,5 +11,6 @@ namespace Api.Interfaces
         string CreateToken(User user);
         string GenerateRefreshToken();
         Task<UserDto?> RefreshTokenAsync(string refreshToken);
+        Task<EditedUserDto?> EditUserAsync(string userId, EditedUserDto editedUserDto);
     }
 }

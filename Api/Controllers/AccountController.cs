@@ -1,5 +1,8 @@
+using System.Security.Claims;
 using Api.Dtos;
+using Api.Dtos.User;
 using Api.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers
@@ -92,5 +95,31 @@ namespace Api.Controllers
                 return Unauthorized(new { message = ex.Message });
             }
         }
+
+        [Authorize]
+        [HttpPost("edit")]
+        public async Task<IActionResult> EditUser([FromBody] EditedUserDto editedUserDto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+                
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized("Usuário não foi encontrado.");
+            }
+            try
+            {
+                var updatedUser = await _authServices.EditUserAsync(userId, editedUserDto);
+
+                return Ok(updatedUser);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
     }
 }

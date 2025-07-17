@@ -4,6 +4,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Api.Data;
 using Api.Dtos;
+using Api.Dtos.User;
 using Api.Interfaces;
 using Api.Models;
 using Microsoft.AspNetCore.Identity;
@@ -29,7 +30,7 @@ namespace Api.Services
         {
             var signingKey = _configuration.GetValue<string>("JWT:SigningKey")
                 ?? throw new InvalidOperationException("JWT:SigningKey não configurado.");
-      
+
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id),
@@ -51,6 +52,62 @@ namespace Api.Services
             );
 
             return new JwtSecurityTokenHandler().WriteToken(tokenDescriptor);
+        }
+
+        public async Task<EditedUserDto?> EditUserAsync(string userId, EditedUserDto editedUserDto)
+        {
+            var user = await _userManager.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            if (user == null)
+            {
+                throw new InvalidOperationException("Usuário não encontrado.");
+            }
+
+            if (!string.IsNullOrEmpty(editedUserDto.FullName))
+            {
+                user.FullName = editedUserDto.FullName;
+            }
+            if (!string.IsNullOrEmpty(editedUserDto.Email))
+            {
+                user.Email = editedUserDto.Email;
+            }
+            if (!string.IsNullOrEmpty(editedUserDto.UserName))
+            {
+                var userNameExists = await _userManager.Users.AnyAsync(u => u.UserName == editedUserDto.UserName && u.Id != userId);
+                if (userNameExists)
+                {
+                    throw new InvalidOperationException("Nome de usuário já está em uso.");
+                }
+                user.UserName = editedUserDto.UserName;
+            }
+            if (!string.IsNullOrEmpty(editedUserDto.Password))
+            {
+                var passwordHasher = new PasswordHasher<User>();
+                user.PasswordHash = passwordHasher.HashPassword(user, editedUserDto.Password);
+            }
+            if (editedUserDto.Age.HasValue)
+            {
+                user.Age = editedUserDto.Age.Value;
+            }
+            if (!string.IsNullOrEmpty(editedUserDto.About))
+            {
+                user.About = editedUserDto.About;
+            }
+
+            var result = _userManager.UpdateAsync(user).Result;
+            if (!result.Succeeded)
+            {
+                throw new InvalidOperationException("Erro ao atualizar o usuário.");
+            }
+
+            return new EditedUserDto
+            {
+                UserName = user.UserName,
+                Email = user.Email,
+                About = user.About,
+                Age = user.Age,
+                Password = "******", 
+                FullName = user.FullName
+            };
         }
 
         public string GenerateRefreshToken()

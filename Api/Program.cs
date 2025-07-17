@@ -85,6 +85,18 @@ builder.Services.AddAuthentication(options =>
 });
 
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowSpecificOrigin",
+        builder =>
+        {
+            builder.WithOrigins("http://localhost:3000", "https://preview--knowledgehub-medium-front.lovable.app", "https://96db0b26-a3ae-4fb4-b7a4-5e773b4761d9.lovableproject.com", "https://id-preview--96db0b26-a3ae-4fb4-b7a4-5e773b4761d9.lovable.app")
+                   .AllowAnyHeader()
+                   .AllowAnyMethod()
+                   .AllowCredentials();
+        });
+});
+
 var settings = MongoClientSettings.FromConnectionString(
     builder.Configuration["MongoDb:DefaultConnection"]
 );
@@ -123,8 +135,6 @@ builder.Services.AddSingleton<IMongoDatabase>(sp =>
     return client.GetDatabase(dbName);
 });
 
-
-
 builder.Services.AddTransient<CategoryDataSeeder>();
 builder.Services.AddScoped<IAuthServices, AuthServices>();
 builder.Services.AddScoped<IArticleServices, ArticleServices>();
@@ -146,11 +156,14 @@ if (app.Environment.IsDevelopment())
 //     Secure = CookieSecurePolicy.Always, 
 //     HttpOnly = HttpOnlyPolicy.Always 
 // });
+app.UseCors("AllowSpecificOrigin");
 
 
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+
+
 
 using (var scope = app.Services.CreateScope())
 {

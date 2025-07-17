@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "47m1L6ZmFZg=",
+  "dgSpecHash": "nllAEkSkJbw=",
   "success": true,
   "projectFilePath": "/home/ray/Documentos/Csharp/KnowledgeHub/Api/Api.csproj",
   "expectedPackageFiles": [
@@ -82,8 +82,8 @@
     "/home/ray/.nuget/packages/microsoft.openapi/1.6.23/microsoft.openapi.1.6.23.nupkg.sha512",
     "/home/ray/.nuget/packages/microsoft.win32.registry/5.0.0/microsoft.win32.registry.5.0.0.nupkg.sha512",
     "/home/ray/.nuget/packages/mimemapping/3.0.1/mimemapping.3.0.1.nupkg.sha512",
-    "/home/ray/.nuget/packages/mongodb.bson/3.4.0/mongodb.bson.3.4.0.nupkg.sha512",
-    "/home/ray/.nuget/packages/mongodb.driver/3.4.0/mongodb.driver.3.4.0.nupkg.sha512",
+    "/home/ray/.nuget/packages/mongodb.bson/3.4.1/mongodb.bson.3.4.1.nupkg.sha512",
+    "/home/ray/.nuget/packages/mongodb.driver/3.4.1/mongodb.driver.3.4.1.nupkg.sha512",
     "/home/ray/.nuget/packages/mono.texttemplating/3.0.0/mono.texttemplating.3.0.0.nupkg.sha512",
     "/home/ray/.nuget/packages/newtonsoft.json/13.0.3/newtonsoft.json.13.0.3.nupkg.sha512",
     "/home/ray/.nuget/packages/newtonsoft.json.bson/1.0.2/newtonsoft.json.bson.1.0.2.nupkg.sha512",
