@@ -141,6 +141,7 @@ builder.Services.AddScoped<IArticleServices, ArticleServices>();
 builder.Services.AddScoped<IMediaServices, MediaServices>();
 builder.Services.AddScoped<ICommentServices, CommentServices>();
 builder.Services.AddScoped<IArticleVersionServices, ArticleVersionServices>();
+builder.Services.AddScoped<IFavoriteServices, FavoriteServices>();
 
 var app = builder.Build();
 
