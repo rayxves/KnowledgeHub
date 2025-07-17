@@ -86,13 +86,13 @@ namespace Api.Controllers
         public async Task<IActionResult> GetCommentsByArticleId(Guid articleId)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-          
+
             if (articleId == Guid.Empty)
             {
                 return BadRequest("ID do artigo inválido.");
             }
 
-            userId ??= string.Empty; 
+            userId ??= string.Empty;
             var comments = await _commentServices.GetCommentsByArticleIdAsync(articleId, userId);
             if (comments == null || !comments.Any())
             {
@@ -176,7 +176,7 @@ namespace Api.Controllers
             return Ok(replies);
         }
 
-
+        
 
     }
 }

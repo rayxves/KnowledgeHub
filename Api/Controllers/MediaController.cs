@@ -59,7 +59,7 @@ namespace Api.Controllers
         }
 
         [Authorize]
-        [HttpGet("check-url")]
+        [HttpGet("url")]
         public async Task<IActionResult> CheckMediaByUrlAndUserId(string url)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);

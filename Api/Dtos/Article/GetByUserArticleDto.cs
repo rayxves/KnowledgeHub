@@ -5,8 +5,8 @@ namespace Api.Dtos
 {
     public class GetByUserArticleDto
     {
-         public Guid Id { get; set; }
-       
+        public Guid Id { get; set; }
+
         public string Title { get; set; } = string.Empty;
 
         public string ContentHtmlSanitized { get; set; }
@@ -22,8 +22,10 @@ namespace Api.Dtos
         public string Status { get; set; }
 
         public int LikesCount { get; set; }
+        public bool UserLiked { get; set; }
 
-        public ICollection<GetCommentDto>? Comments { get; set; } 
+
+        public ICollection<GetCommentDto>? Comments { get; set; }
 
         public ICollection<MediaDto>? MediaItems { get; set; }
     }

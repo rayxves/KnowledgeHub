@@ -19,6 +19,7 @@ namespace Api.Dtos
 
         public int LikesCount { get; set; }
 
+        public bool UserLiked { get; set; }
         public ICollection<GetCommentDto>? Comments { get; set; } 
 
         public ICollection<MediaDto>? MediaItems { get; set; }

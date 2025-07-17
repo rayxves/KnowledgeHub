@@ -6,6 +6,7 @@ using Api.Models;
 using Markdig;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using MongoDB.Driver;
 
 namespace Api.Services
 {
@@ -13,27 +14,30 @@ namespace Api.Services
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<User> _userManager;
+        private readonly IMongoCollection<ArticleVersion> _articleVersions;
 
-        public ArticleServices(ApplicationDbContext context, UserManager<User> userManager)
+        public ArticleServices(ApplicationDbContext context, UserManager<User> userManager, IMongoClient client, IConfiguration config)
         {
             _context = context;
             _userManager = userManager;
+            var database = client.GetDatabase(config["MongoDb:DatabaseName"]);
+            _articleVersions = database.GetCollection<ArticleVersion>("ArticleVersions");
         }
 
-        public async Task<GetByUserArticleDto> CreateArticleAsync(CreateArticleDto createArticleDto, string userId)
+        public async Task<GetByUserArticleDto> CreateArticleAsync(CreateArticleDto dto, string userId)
         {
-            var user = await _userManager.FindByIdAsync(userId);
-            if (user == null) throw new ArgumentException("Usúario não foi encontrado.");
+            var user = await _userManager.FindByIdAsync(userId)
+                ?? throw new ArgumentException("Usuário não encontrado.");
 
-            var category = await _context.Categories.FirstOrDefaultAsync(c => c.Slug.ToLower() == createArticleDto.Slug.ToLower());
-            if (category == null) throw new ArgumentException("Categoria não foi encontrada.");
+            var category = await _context.Categories.FirstOrDefaultAsync(c => c.Slug.ToLower() == dto.Slug.ToLower())
+                ?? throw new ArgumentException("Categoria não encontrada.");
 
             var article = new Article
             {
-                Title = createArticleDto.Title,
-                ContentMarkdown = createArticleDto.ContentMarkdown,
-                ContentHtmlSanitized = Markdown.ToHtml(createArticleDto.ContentMarkdown),
-                UserId = user.Id,
+                Title = dto.Title,
+                ContentMarkdown = dto.ContentMarkdown,
+                ContentHtmlSanitized = Markdown.ToHtml(dto.ContentMarkdown),
+                UserId = userId,
                 User = user,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
@@ -47,55 +51,36 @@ namespace Api.Services
             await _context.Articles.AddAsync(article);
             await _context.SaveChangesAsync();
 
-            if (createArticleDto.MediaItems != null && createArticleDto.MediaItems.Any())
+            if (dto.MediaItems?.Any() == true)
             {
-                foreach (var mediaItem in createArticleDto.MediaItems)
+                foreach (var mediaItem in dto.MediaItems)
                 {
-                    var mediaType = Enum.TryParse<MediaType>(mediaItem.Type, true, out var parsedType) ? parsedType : MediaType.Image;
-
-                    var media = new Media
+                    _context.MediaItems.Add(new Media
                     {
                         Url = mediaItem.Url,
-                        Type = mediaType,
                         Description = mediaItem.Description,
+                        Type = Enum.TryParse<MediaType>(mediaItem.Type, true, out var type) ? type : MediaType.Image,
                         ArticleId = article.Id
-                    };
-
-                    _context.MediaItems.Add(media);
-
+                    });
                 }
+
                 await _context.SaveChangesAsync();
             }
 
-            return new GetByUserArticleDto
-            {
-                Id = article.Id,
-                Title = article.Title,
-                ContentHtmlSanitized = article.ContentHtmlSanitized,
-                CreatedAt = article.CreatedAt,
-                CreatedBy = user.UserName,
-                CategoryName = category.Name,
-                Status = article.Status.ToString(),
-                UpdatedAt = article.UpdatedAt,
-                LikesCount = article.Likes.Count,
-                MediaItems = article.MediaItems?.Select(m => m.ToMediaDto()).ToList() ?? new List<MediaDto>(),
-            };
+            return await article.ToGetByUserArticleDtoAsync(_context, userId);
         }
 
         public async Task<bool> DeleteArticleAsync(string userId, Guid articleId)
         {
-            var article = await _context.Articles
-                .Include(a => a.User)
-                .FirstOrDefaultAsync(a => a.Id == articleId && a.UserId == userId);
-
-            if (article == null) throw new ArgumentException("Artigo não encontrado ou você não tem permissão para excluí-lo.");
+            var article = await _context.Articles.FirstOrDefaultAsync(a => a.Id == articleId && a.UserId == userId)
+                ?? throw new ArgumentException("Artigo não encontrado ou você não tem permissão.");
 
             _context.Articles.Remove(article);
             await _context.SaveChangesAsync();
             return true;
         }
 
-        public async Task<IEnumerable<GetArticleDto>> GetAllPublicArticlesAsync()
+        public async Task<IEnumerable<GetArticleDto>> GetAllPublicArticlesAsync(string userId)
         {
             var articles = await _context.Articles
                 .Where(a => a.Status == ArticleStatus.Published)
@@ -103,32 +88,47 @@ namespace Api.Services
                 .Include(a => a.Category)
                 .Include(a => a.Comments).ThenInclude(c => c.User)
                 .Include(a => a.MediaItems)
+                .Include(a => a.Likes)
                 .ToListAsync();
 
-            return articles.Select(a => new GetArticleDto
+            var result = new List<GetArticleDto>();
+            foreach (var article in articles)
+                result.Add(await article.ToGetArticleDtoAsync(_context, userId));
+
+            return result;
+        }
+
+        public async Task<IEnumerable<GetArticleDto>> GetArticlesBySearchAsync(string searchTerm, string userId)
+        {
+            if (string.IsNullOrWhiteSpace(searchTerm))
+                return [];
+
+            var terms = searchTerm.ToLower().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+            var query = _context.Articles
+                .Include(a => a.User)
+                .Include(a => a.Category)
+                .Include(a => a.Comments).ThenInclude(c => c.User)
+                .Include(a => a.MediaItems)
+                .Include(a => a.Likes)
+                .Where(a => a.Status == ArticleStatus.Published);
+
+            foreach (var term in terms)
             {
-                Id = a.Id,
-                Title = a.Title,
-                ContentHtmlSanitized = a.ContentHtmlSanitized,
-                CreatedAt = a.CreatedAt,
-                CreatedBy = a.User.UserName,
-                CategoryName = a.Category.Name,
-                LikesCount = a.Likes.Count,
-                Comments = a.Comments.Select(c => new GetCommentDto
-                {
-                    Id = c.Id,
-                    Text = c.Text,
-                    CreatedAt = c.CreatedAt,
-                    CreatedBy = c.User.UserName,
-                    ParentCommentId = c.ParentCommentId
-                }).ToList(),
-                MediaItems = a.MediaItems.Select(m => new MediaDto
-                {
-                    Url = m.Url,
-                    Type = m.Type.ToString(),
-                    Description = m.Description
-                }).ToList()
-            });
+                var t = term;
+                query = query.Where(a =>
+                    EF.Functions.Like(a.Title.ToLower(), $"%{t}%") ||
+                    EF.Functions.Like(a.ContentMarkdown.ToLower(), $"%{t}%") ||
+                    EF.Functions.Like(a.Category.Name.ToLower(), $"%{t}%"));
+            }
+
+            var articles = await query.ToListAsync();
+
+            var result = new List<GetArticleDto>();
+            foreach (var article in articles)
+                result.Add(await article.ToGetArticleDtoAsync(_context, userId));
+
+            return result;
         }
 
         public async Task<IEnumerable<GetByUserArticleDto>> GetMyArticlesAsync(string userId)
@@ -139,33 +139,14 @@ namespace Api.Services
                 .Include(a => a.Category)
                 .Include(a => a.Comments).ThenInclude(c => c.User)
                 .Include(a => a.MediaItems)
+                .Include(a => a.Likes)
                 .ToListAsync();
 
-            return articles.Select(a => new GetByUserArticleDto
-            {
-                Id = a.Id,
-                Title = a.Title,
-                ContentHtmlSanitized = a.ContentHtmlSanitized,
-                CreatedAt = a.CreatedAt,
-                CreatedBy = a.User.UserName,
-                CategoryName = a.Category.Name,
-                UpdatedAt = a.UpdatedAt,
-                Status = a.Status.ToString(),
-                LikesCount = a.Likes.Count,
-                Comments = a.Comments.Select(c => new GetCommentDto
-                {
-                    Text = c.Text,
-                    CreatedAt = c.CreatedAt,
-                    CreatedBy = c.User.UserName,
-                    ParentCommentId = c.ParentCommentId
-                }).ToList(),
-                MediaItems = a.MediaItems.Select(m => new MediaDto
-                {
-                    Url = m.Url,
-                    Type = m.Type.ToString(),
-                    Description = m.Description
-                }).ToList()
-            });
+            var result = new List<GetByUserArticleDto>();
+            foreach (var article in articles)
+                result.Add(await article.ToGetByUserArticleDtoAsync(_context, userId));
+
+            return result;
         }
 
         public async Task<IEnumerable<GetArticleDto>> GetPublicArticlesByUserIdAsync(string userId)
@@ -176,99 +157,139 @@ namespace Api.Services
                 .Include(a => a.Category)
                 .Include(a => a.Comments).ThenInclude(c => c.User)
                 .Include(a => a.MediaItems)
+                .Include(a => a.Likes)
                 .ToListAsync();
 
+            var result = new List<GetArticleDto>();
+            foreach (var article in articles)
+                result.Add(await article.ToGetArticleDtoAsync(_context, userId));
 
-            return articles.Select(a => new GetArticleDto
-            {
-                Id = a.Id,
-                Title = a.Title,
-                ContentHtmlSanitized = a.ContentHtmlSanitized,
-                CreatedAt = a.CreatedAt,
-                CreatedBy = a.User.UserName,
-                CategoryName = a.Category.Name,
-                LikesCount = a.Likes.Count,
-                Comments = a.Comments.Select(c => new GetCommentDto
-                {
-                    Text = c.Text,
-                    CreatedAt = c.CreatedAt,
-                    CreatedBy = c.User.UserName,
-                    ParentCommentId = c.ParentCommentId
-                }).ToList(),
-                MediaItems = a.MediaItems.Select(m => new MediaDto
-                {
-                    Url = m.Url,
-                    Type = m.Type.ToString(),
-                    Description = m.Description
-                }).ToList()
-            });
+            return result;
         }
 
-        public async Task<GetByUserArticleDto> UpdateArticleAsync(UpdateArticleDto updateArticleDto, string userId)
+      
+
+        public async Task<bool> LikeArticleAsync(Guid articleId, string userId)
+        {
+            var article = await _context.Articles
+                .Include(a => a.Likes)
+                .FirstOrDefaultAsync(a => a.Id == articleId)
+                ?? throw new ArgumentException("Artigo não encontrado.");
+
+            if (article.Likes.Any(l => l.UserId == userId)) return false;
+
+            var user = await _userManager.FindByIdAsync(userId)
+                ?? throw new ArgumentException("Usuário não encontrado.");
+
+            var like = new ArticleLike
+            {
+                ArticleId = article.Id,
+                UserId = userId,
+                LikedAt = DateTime.UtcNow,
+                User = user,
+                Article = article
+            };
+
+            _context.ArticleLikes.Add(like);
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
+
+        public async Task<bool> UnlikeArticleAsync(Guid articleId, string userId)
+        {
+            var article = await _context.Articles
+                .Include(a => a.Likes)
+                .FirstOrDefaultAsync(a => a.Id == articleId)
+                ?? throw new ArgumentException("Artigo não encontrado.");
+
+            var like = article.Likes.FirstOrDefault(l => l.UserId == userId)
+                ?? throw new ArgumentException("Curtida não encontrada.");
+
+            _context.ArticleLikes.Remove(like);
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
+
+        public async Task<GetByUserArticleDto> UpdateArticleAsync(UpdateArticleDto dto, string userId)
         {
             var article = await _context.Articles
                 .Include(a => a.User)
                 .Include(a => a.Category)
-                .Include(a => a.Likes)
                 .Include(a => a.MediaItems)
-                .FirstOrDefaultAsync(a => a.Id == updateArticleDto.Id);
+                .Include(a => a.Likes)
+                .Include(a => a.Comments)
+                .FirstOrDefaultAsync(a => a.Id == dto.Id);
 
             if (article == null || article.UserId != userId)
-                throw new ArgumentException("Artigo não encontrado ou você não tem permissão para atualizá-lo.");
+                throw new ArgumentException("Artigo não encontrado ou sem permissão.");
 
-            var status = Enum.TryParse<ArticleStatus>(updateArticleDto.Status, true, out var parsedStatus)
-                ? parsedStatus
-                : throw new ArgumentException("Status inválido.");
+            var status = Enum.TryParse<ArticleStatus>(dto.Status, true, out var parsedStatus)
+                ? parsedStatus : throw new ArgumentException("Status inválido.");
 
             var category = await _context.Categories
-                .FirstOrDefaultAsync(c => c.Slug.ToLower() == updateArticleDto.Slug.ToLower())
+                .FirstOrDefaultAsync(c => c.Slug.ToLower() == dto.Slug.ToLower())
                 ?? throw new ArgumentException("Categoria não encontrada.");
 
-            article.Title = updateArticleDto.Title;
-            article.ContentMarkdown = updateArticleDto.ContentMarkdown;
-            article.ContentHtmlSanitized = Markdown.ToHtml(updateArticleDto.ContentMarkdown);
+
+            var version = new ArticleVersion
+            {
+                Title = dto.Title,
+                ArticleId = article.Id,
+                EditedAt = DateTime.UtcNow,
+                EditedByUserId = userId,
+                ContentMarkdown = article.ContentMarkdown,
+                ContentHtmlSanitized = article.ContentHtmlSanitized,
+                VersionNumber = (int)await _articleVersions.CountDocumentsAsync(av => av.ArticleId == article.Id) + 1,
+            };
+
+            var mediaVersions = new List<MediaVersion>();
+            foreach (var MediaItem in dto.MediaItems ?? [])
+            {
+                var mediVersion = new MediaVersion
+                {
+                    Url = MediaItem.Url,
+                    Type = Enum.TryParse<MediaType>(MediaItem.Type, true, out var type) ? type : MediaType.Image,
+                    Description = MediaItem.Description,
+                    ArticleVersionId = version.Id,
+                    ArticleVersion = version
+                };
+                mediaVersions.Add(mediVersion);
+            }
+
+            version.MediaItems = mediaVersions;
+
+            await _articleVersions.InsertOneAsync(version);
+
+            article.Title = dto.Title;
+            article.ContentMarkdown = dto.ContentMarkdown;
+            article.ContentHtmlSanitized = Markdown.ToHtml(dto.ContentMarkdown);
             article.UpdatedAt = DateTime.UtcNow;
-            article.Status = status;
+            article.Status = parsedStatus;
             article.Category = category;
-            article.CategoryId = category.Id;
 
             var oldMedia = await _context.MediaItems.Where(m => m.ArticleId == article.Id).ToListAsync();
             _context.MediaItems.RemoveRange(oldMedia);
 
-            if (updateArticleDto.MediaItems != null && updateArticleDto.MediaItems.Any())
+            if (dto.MediaItems?.Any() == true)
             {
-                foreach (var mediaItem in updateArticleDto.MediaItems)
+                foreach (var mediaItem in dto.MediaItems)
                 {
-                    var mediaType = Enum.TryParse<MediaType>(mediaItem.Type, true, out var parsedType) ? parsedType : MediaType.Image;
-
-                    var media = new Media
+                    _context.MediaItems.Add(new Media
                     {
                         Url = mediaItem.Url,
-                        Type = mediaType,
                         Description = mediaItem.Description,
+                        Type = Enum.TryParse<MediaType>(mediaItem.Type, true, out var type) ? type : MediaType.Image,
                         ArticleId = article.Id
-                    };
-
-                    _context.MediaItems.Add(media);
+                    });
                 }
             }
 
             _context.Articles.Update(article);
             await _context.SaveChangesAsync();
 
-            return new GetByUserArticleDto
-            {
-                Id = article.Id,
-                Title = article.Title,
-                ContentHtmlSanitized = article.ContentHtmlSanitized,
-                CreatedAt = article.CreatedAt,
-                CreatedBy = article.User.UserName,
-                CategoryName = article.Category.Name,
-                Status = article.Status.ToString(),
-                UpdatedAt = article.UpdatedAt,
-                LikesCount = article.Likes.Count,
-                MediaItems = article.MediaItems?.Select(m => m.ToMediaDto()).ToList() ?? new List<MediaDto>(),
-            };
+            return await article.ToGetByUserArticleDtoAsync(_context, userId);
         }
     }
 }

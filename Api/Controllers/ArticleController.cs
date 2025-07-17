@@ -26,7 +26,9 @@ namespace Api.Controllers
         [HttpGet]
         public async Task<IActionResult> GetArticles()
         {
-            var articles = await _articleService.GetAllPublicArticlesAsync();
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            userIdClaim ??= new Claim(ClaimTypes.NameIdentifier, "anonymous");
+            var articles = await _articleService.GetAllPublicArticlesAsync(userIdClaim.Value);
             if (articles == null || !articles.Any())
             {
                 return NotFound("Nenhum artigo encontrado.");
@@ -136,6 +138,71 @@ namespace Api.Controllers
             }
             return NoContent();
         }
+
+        [HttpPost("like/{articleId}")]
+        public async Task<IActionResult> LikeArticle(Guid articleId)
+        {
+            if (articleId == Guid.Empty)
+            {
+                return BadRequest("ID do artigo inválido.");
+            }
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized("Usuário não autenticado.");
+            }
+            try
+            {
+                var result = await _articleService.LikeArticleAsync(articleId, userId);
+                return Ok(new { success = result });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpPost("unlike/{articleId}")]
+        public async Task<IActionResult> UnlikeArticle(Guid articleId)
+        {
+            if (articleId == Guid.Empty)
+            {
+                return BadRequest("ID do artigo inválido.");
+            }
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized("Usuário não autenticado.");
+            }
+            try
+            {
+                var result = await _articleService.UnlikeArticleAsync(articleId, userId);
+                return Ok(new { success = result });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpGet("search")]
+        public async Task<IActionResult> SearchArticles([FromQuery] string searchTerm)
+        {
+            if (string.IsNullOrEmpty(searchTerm))
+            {
+                return BadRequest("Termo de pesquisa não pode estar vazio.");
+            }
+
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            userIdClaim ??= new Claim(ClaimTypes.NameIdentifier, "anonymous");
+            var articles = await _articleService.GetArticlesBySearchAsync(searchTerm, userIdClaim.Value);
+            if (articles == null || !articles.Any())
+            {
+                return NotFound("Nenhum artigo encontrado com o termo de pesquisa fornecido.");
+            }
+            return Ok(articles);
+        }
+
 
     }
 }

@@ -14,5 +14,15 @@ namespace Api.Mappers
                 Description = media.Description
             };
         }
+
+        public static MediaDto ToMediaVersionDto(this MediaVersion media)
+        {
+            return new MediaDto
+            {
+                Url = media.Url,
+                Type = media.Type.ToString(),
+                Description = media.Description
+            };
+        }
     }
 }

@@ -1,11 +1,34 @@
+// File: Mappers/ArticleMapper.cs
+using Api.Data;
 using Api.Dtos;
 using Api.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace Api.Mappers
 {
     public static class ArticleMapper
     {
-        public static GetByUserArticleDto ToArticleDto(this Article article)
+        public static async Task<GetArticleDto> ToGetArticleDtoAsync(this Article article, ApplicationDbContext context, string userId)
+        {
+            return new GetArticleDto
+            {
+                Id = article.Id,
+                Title = article.Title,
+                ContentHtmlSanitized = article.ContentHtmlSanitized,
+                CreatedAt = article.CreatedAt,
+                CreatedBy = article.User?.UserName ?? "Unknown",
+                CategoryName = article.Category?.Name ?? "Uncategorized",
+                LikesCount = article.Likes.Count,
+                UserLiked = article.Likes.Any(l => l.UserId == userId),
+                Comments = article.Comments?
+                    .Where(c => c.ParentCommentId == null)
+                    .Select(c => c.ToGetCommentDto())
+                    .ToList() ?? new List<GetCommentDto>(),
+                MediaItems = article.MediaItems?.Select(m => m.ToMediaDto()).ToList() ?? new List<MediaDto>()
+            };
+        }
+
+        public static async Task<GetByUserArticleDto> ToGetByUserArticleDtoAsync(this Article article, ApplicationDbContext context, string userId)
         {
             return new GetByUserArticleDto
             {
@@ -15,17 +38,15 @@ namespace Api.Mappers
                 CreatedAt = article.CreatedAt,
                 CreatedBy = article.User?.UserName ?? "Unknown",
                 CategoryName = article.Category?.Name ?? "Uncategorized",
-                UpdatedAt = article.UpdatedAt,
                 Status = article.Status.ToString(),
+                UpdatedAt = article.UpdatedAt,
                 LikesCount = article.Likes.Count,
-                Comments = article.Comments?.Select(c => c.ToGetCommentDto()).ToList(),
-                MediaItems = article.MediaItems.Select(m => new MediaDto
-                {
-                  
-                    Url = m.Url,
-                    Type = m.Type.ToString(),
-                    Description = m.Description
-                }).ToList() ?? new List<MediaDto>(),
+                UserLiked = article.Likes.Any(l => l.UserId == userId),
+                Comments = article.Comments?
+                    .Where(c => c.ParentCommentId == null)
+                    .Select(c => c.ToGetCommentDto())
+                    .ToList() ?? new List<GetCommentDto>(),
+                MediaItems = article.MediaItems?.Select(m => m.ToMediaDto()).ToList() ?? new List<MediaDto>()
             };
         }
     }
