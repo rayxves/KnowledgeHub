@@ -93,6 +93,7 @@ builder.Services.AddTransient<CategoryDataSeeder>();
 builder.Services.AddScoped<IAuthServices, AuthServices>();
 builder.Services.AddScoped<IArticleServices, ArticleServices>();
 builder.Services.AddScoped<IMediaServices, MediaServices>();
+builder.Services.AddScoped<ICommentServices, CommentServices>();
 
 var app = builder.Build();
 

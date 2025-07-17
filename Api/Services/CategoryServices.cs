@@ -39,7 +39,7 @@ namespace Api.Services
                 })
                 .FirstOrDefaultAsync();
 
-            return article != null ? article : throw new InvalidOperationException("Article not found for the given category slug.");
+            return article != null ? article : throw new InvalidOperationException("Artigo não encontrado.");
         }
     }
 }

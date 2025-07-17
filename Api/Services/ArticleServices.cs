@@ -116,6 +116,7 @@ namespace Api.Services
                 LikesCount = a.Likes.Count,
                 Comments = a.Comments.Select(c => new GetCommentDto
                 {
+                    Id = c.Id,
                     Text = c.Text,
                     CreatedAt = c.CreatedAt,
                     CreatedBy = c.User.UserName,
