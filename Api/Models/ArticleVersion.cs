@@ -8,6 +8,8 @@ namespace Api.Models
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
         public string Id { get; set; } = string.Empty;
+        [BsonElement("Title")]
+        public string Title { get; set; } = string.Empty;
 
         [BsonElement("ArticleId")]
         public Guid ArticleId { get; set; }
@@ -26,5 +28,8 @@ namespace Api.Models
 
         [BsonElement("EditedByUserId")]
         public string? EditedByUserId { get; set; }
+
+        [BsonElement("MediaItems")]
+        public ICollection<MediaVersion>? MediaItems { get; set; }
     }
 }

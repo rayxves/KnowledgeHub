@@ -9,6 +9,9 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using MongoDB.Bson;
+using MongoDB.Bson.Serialization;
+using MongoDB.Bson.Serialization.Serializers;
 using MongoDB.Driver;
 using Newtonsoft.Json;
 using Services;
@@ -82,18 +85,52 @@ builder.Services.AddAuthentication(options =>
 });
 
 
+var settings = MongoClientSettings.FromConnectionString(
+    builder.Configuration["MongoDb:DefaultConnection"]
+);
+
+settings.ServerApi = new ServerApi(ServerApiVersion.V1);
+
+var client = new MongoClient(settings);
+
+var database = client.GetDatabase(builder.Configuration["MongoDb:DatabaseName"]);
+
+try
+{
+    var result = database.RunCommand<BsonDocument>(new BsonDocument("ping", 1));
+    Console.WriteLine("✅ Conectado com sucesso ao MongoDB Atlas!");
+}
+catch (Exception ex)
+{
+    Console.WriteLine("❌ Erro na conexão:");
+    Console.WriteLine(ex);
+}
+
+BsonSerializer.RegisterSerializer(new GuidSerializer(BsonType.String));
+
 
 builder.Services.AddSingleton<IMongoClient>(sp =>
 {
-    var connectionString = builder.Configuration.GetConnectionString("MongoDb");
+    var connectionString = builder.Configuration["MongoDb:DefaultConnection"];
     return new MongoClient(connectionString);
 });
+
+
+builder.Services.AddSingleton<IMongoDatabase>(sp =>
+{
+    var client = sp.GetRequiredService<IMongoClient>();
+    var dbName = builder.Configuration["MongoDb:DatabaseName"];
+    return client.GetDatabase(dbName);
+});
+
+
 
 builder.Services.AddTransient<CategoryDataSeeder>();
 builder.Services.AddScoped<IAuthServices, AuthServices>();
 builder.Services.AddScoped<IArticleServices, ArticleServices>();
 builder.Services.AddScoped<IMediaServices, MediaServices>();
 builder.Services.AddScoped<ICommentServices, CommentServices>();
+builder.Services.AddScoped<IArticleVersionServices, ArticleVersionServices>();
 
 var app = builder.Build();
 
