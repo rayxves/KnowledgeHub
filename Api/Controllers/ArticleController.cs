@@ -69,6 +69,29 @@ namespace Api.Controllers
             return Ok(articles);
         }
 
+        [HttpGet("by-title-and-username")]
+        public async Task<IActionResult> GetArticleByTitleAndUsername([FromBody] string username, string title)
+        {
+            if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(title))
+            {
+                return BadRequest("Username e title não podem estar vazios.");
+            }
+
+            try
+            {
+                var article = await _articleService.GetArticleByTitleAndUsernameAsync(username, title);
+                if (article == null)
+                {
+                    return NotFound("Nenhum artigo encontrado com o título e usuário fornecidos.");
+                }
+                return Ok(article);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+        }
+
         [Authorize]
         [HttpPost("create")]
         public async Task<IActionResult> CreateArticle([FromBody] CreateArticleDto createArticleDto)

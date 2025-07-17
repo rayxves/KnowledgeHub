@@ -25,19 +25,30 @@ namespace Api.Controllers
             {
                 return NotFound("Nenhuma categoria encontrada.");
             }
-         
+
             return Ok(categories);
         }
 
-        [HttpGet("get-articles/{slug}")]
-        public async Task<IActionResult> GetArticleByCategory(string slug, string userId)
+        [HttpGet("get-articles-by-user/{slug}")]
+        public async Task<IActionResult> GetArticleByCategoryAndUser(string slug, string userId)
         {
-            var article = await _categoryServices.GetArticleByCategoryAsync(slug, userId);
-            if (article == null)
+            var articles = await _categoryServices.GetArticleByCategoryAndUserIdAsync(slug, userId);
+            if (articles == null)
             {
                 return NotFound("Nenhum artigo encontrado para essa categoria.");
             }
-            return Ok(article);
+            return Ok(articles);
+        }
+
+        [HttpGet("get-articles/{slug}")]
+        public async Task<IActionResult> GetArticlesByCategory(string slug)
+        {
+            var articles = await _categoryServices.GetArticlesByCategoryAsync(slug);
+            if (articles == null || !articles.Any())
+            {
+                return NotFound("Nenhum artigo encontrado para essa categoria.");
+            }
+            return Ok(articles);
         }
     }
 }

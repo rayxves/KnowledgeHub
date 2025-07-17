@@ -32,6 +32,10 @@ namespace Api.Services
             var category = await _context.Categories.FirstOrDefaultAsync(c => c.Slug.ToLower() == dto.Slug.ToLower())
                 ?? throw new ArgumentException("Categoria não encontrada.");
 
+            var existingArticle = await _context.Articles
+                .FirstOrDefaultAsync(a => a.Title.ToLower() == dto.Title.ToLower() && a.UserId == userId)
+                ?? throw new ArgumentException("Já existe um artigo desse usuário com esse título.");
+
             var article = new Article
             {
                 Title = dto.Title,
@@ -67,7 +71,7 @@ namespace Api.Services
                 await _context.SaveChangesAsync();
             }
 
-            return await article.ToGetByUserArticleDtoAsync(_context, userId);
+            return article.ToGetByUserArticleDtoAsync(userId);
         }
 
         public async Task<bool> DeleteArticleAsync(string userId, Guid articleId)
@@ -93,9 +97,24 @@ namespace Api.Services
 
             var result = new List<GetArticleDto>();
             foreach (var article in articles)
-                result.Add(await article.ToGetArticleDtoAsync(_context, userId));
+                result.Add(article.ToGetArticleDtoAsync(userId));
 
             return result;
+        }
+
+        public async Task<GetArticleDto> GetArticleByTitleAndUsernameAsync(string username, string title)
+        {
+            var user = await _userManager.FindByNameAsync(username)
+                ?? throw new ArgumentException("Usuário não encontrado.");
+            var article = await _context.Articles
+                .Include(a => a.User)
+                .Include(a => a.Category)
+                .Include(a => a.Comments).ThenInclude(c => c.User)
+                .Include(a => a.MediaItems)
+                .Include(a => a.Likes)
+                .FirstOrDefaultAsync(a => a.Title.ToLower() == title.ToLower() && a.UserId == user.Id && a.Status == ArticleStatus.Published)
+                ?? throw new ArgumentException("Artigo não encontrado.");
+            return article.ToGetArticleDtoAsync(user.Id);
         }
 
         public async Task<IEnumerable<GetArticleDto>> GetArticlesBySearchAsync(string searchTerm, string userId)
@@ -126,7 +145,7 @@ namespace Api.Services
 
             var result = new List<GetArticleDto>();
             foreach (var article in articles)
-                result.Add(await article.ToGetArticleDtoAsync(_context, userId));
+                result.Add(article.ToGetArticleDtoAsync(userId));
 
             return result;
         }
@@ -144,7 +163,7 @@ namespace Api.Services
 
             var result = new List<GetByUserArticleDto>();
             foreach (var article in articles)
-                result.Add(await article.ToGetByUserArticleDtoAsync(_context, userId));
+                result.Add(article.ToGetByUserArticleDtoAsync(userId));
 
             return result;
         }
@@ -162,12 +181,12 @@ namespace Api.Services
 
             var result = new List<GetArticleDto>();
             foreach (var article in articles)
-                result.Add(await article.ToGetArticleDtoAsync(_context, userId));
+                result.Add(article.ToGetArticleDtoAsync(userId));
 
             return result;
         }
 
-      
+
 
         public async Task<bool> LikeArticleAsync(Guid articleId, string userId)
         {
@@ -289,7 +308,7 @@ namespace Api.Services
             _context.Articles.Update(article);
             await _context.SaveChangesAsync();
 
-            return await article.ToGetByUserArticleDtoAsync(_context, userId);
+            return article.ToGetByUserArticleDtoAsync(userId);
         }
     }
 }

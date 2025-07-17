@@ -8,7 +8,7 @@ namespace Api.Mappers
 {
     public static class ArticleMapper
     {
-        public static async Task<GetArticleDto> ToGetArticleDtoAsync(this Article article, ApplicationDbContext context, string userId)
+        public static GetArticleDto ToGetArticleDtoAsync(this Article article, string userId)
         {
             return new GetArticleDto
             {
@@ -28,7 +28,7 @@ namespace Api.Mappers
             };
         }
 
-        public static async Task<GetByUserArticleDto> ToGetByUserArticleDtoAsync(this Article article, ApplicationDbContext context, string userId)
+        public static GetByUserArticleDto ToGetByUserArticleDtoAsync(this Article article, string userId)
         {
             return new GetByUserArticleDto
             {

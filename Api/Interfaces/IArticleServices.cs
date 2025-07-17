@@ -9,6 +9,7 @@ namespace Api.Interfaces
         Task<IEnumerable<GetByUserArticleDto>> GetMyArticlesAsync(string userId);
 
         Task<IEnumerable<GetArticleDto>> GetAllPublicArticlesAsync(string userId);
+        Task<GetArticleDto> GetArticleByTitleAndUsernameAsync(string username, string title);
 
         Task<GetByUserArticleDto> CreateArticleAsync(CreateArticleDto createArticleDto, string userId);
 

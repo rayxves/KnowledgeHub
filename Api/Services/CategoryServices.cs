@@ -1,6 +1,7 @@
 using Api.Data;
 using Api.Dtos;
 using Api.Interfaces;
+using Api.Mappers;
 using Microsoft.EntityFrameworkCore;
 
 namespace Api.Services
@@ -26,20 +27,24 @@ namespace Api.Services
                 .ToListAsync();
         }
 
-        public async Task<GetArticleDto> GetArticleByCategoryAsync(string slug, string userId)
+        public async Task<IEnumerable<GetArticleDto>> GetArticlesByCategoryAsync(string slug)
         {
-            var article = await _context.Articles
-                .Where(a => a.Category.Slug == slug && a.UserId == userId)
-                .Select(a => new GetArticleDto
-                {
-                    Id = a.Id,
-                    Title = a.Title,
-                    ContentHtmlSanitized = a.ContentHtmlSanitized,
-                    CreatedAt = a.CreatedAt
-                })
-                .FirstOrDefaultAsync();
+            var articleTasks = await _context.Articles
+                .Where(a => a.Category.Slug == slug)
+                .Select(a => a.ToGetArticleDtoAsync(string.Empty))
+                .ToListAsync();
 
-            return article != null ? article : throw new InvalidOperationException("Artigo não encontrado.");
+            return articleTasks.Any() ? articleTasks : throw new KeyNotFoundException("Nenhum artigo encontrado para essa categoria.");
+        }
+
+        public async Task<IEnumerable<GetArticleDto>> GetArticleByCategoryAndUserIdAsync(string slug, string userId)
+        {
+            var articleTasks = await _context.Articles
+                .Where(a => a.Category.Slug == slug && a.UserId == userId)
+                .Select(a => a.ToGetArticleDtoAsync(userId))
+                .ToListAsync();
+
+            return articleTasks.Any() ? articleTasks : throw new KeyNotFoundException("Nenhum artigo encontrado para essa categoria e usuário.");
         }
     }
 }
